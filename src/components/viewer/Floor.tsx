@@ -60,10 +60,11 @@ const HOVER_TINT = '#C7D2FE';    // indigo-200
 const SELECTED_TINT = '#6366F1'; // indigo-500
 
 function FloorComponent({ floor, y, isTopFloor }: FloorProps) {
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-    (window as any).__floorRenderCounts = ((window as any).__floorRenderCounts || 0) + 1;
-  }
-
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      (window as any).__floorRenderCounts = ((window as any).__floorRenderCounts || 0) + 1;
+    }
+  });
   const groupRef = useRef<THREE.Group>(null);
   const liftRef = useRef<THREE.Group>(null); // inner group — only Y lift
   const facadeNorthRef = useRef<THREE.Mesh>(null);

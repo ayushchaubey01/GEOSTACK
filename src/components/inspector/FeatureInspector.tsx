@@ -55,6 +55,23 @@ export function FeatureInspector({
   const [propSearch, setPropSearch] = useState('');
   const [showEmptyProps, setShowEmptyProps] = useState(false);
 
+  const p = selected?.properties || {};
+
+  // Filtered raw properties
+  const allProps = useMemo(() => {
+    return Object.entries(p)
+      .filter(([k]) => {
+        if (!propSearch) return true;
+        const label = FIELD_LABELS[k] || k;
+        return (
+          k.toLowerCase().includes(propSearch.toLowerCase()) ||
+          label.toLowerCase().includes(propSearch.toLowerCase()) ||
+          String(p[k]).toLowerCase().includes(propSearch.toLowerCase())
+        );
+      })
+      .filter(([, v]) => showEmptyProps || !isEmptyValue(v));
+  }, [p, propSearch, showEmptyProps]);
+
   if (!selected) {
     return (
       <div className="flex-1 flex flex-col justify-center">
@@ -71,7 +88,6 @@ export function FeatureInspector({
     );
   }
 
-  const p = selected.properties || {};
   const isBuilding = selected.layer === 'Building';
   const isParcel = selected.layer === 'Parcel';
 
@@ -84,21 +100,6 @@ export function FeatureInspector({
   ]
     .filter(Boolean)
     .join(' · ');
-
-  // Filtered raw properties
-  const allProps = useMemo(() => {
-    return Object.entries(p)
-      .filter(([k]) => {
-        if (!propSearch) return true;
-        const label = FIELD_LABELS[k] || k;
-        return (
-          k.toLowerCase().includes(propSearch.toLowerCase()) ||
-          label.toLowerCase().includes(propSearch.toLowerCase()) ||
-          String(p[k]).toLowerCase().includes(propSearch.toLowerCase())
-        );
-      })
-      .filter(([, v]) => showEmptyProps || !isEmptyValue(v));
-  }, [p, propSearch, showEmptyProps]);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-[#F6F7F9]">

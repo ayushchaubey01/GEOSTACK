@@ -1503,20 +1503,22 @@ export default function MapApp() {
       />
 
       {/* ═══ MAIN WORKSPACE ═══ */}
-      <div className="flex-1 flex relative min-h-0 pt-[68px]">
+      <div className="flex-1 relative min-h-0">
         {/* ── LEFT RAIL ── */}
-        <LeftRail
-          activeTab={railTab}
-          onTabChange={setRailTab}
-          issuesCount={issues.length || stats?.counts?.validation_issues || 0}
-          onOpenShortcuts={() => setShortcutsOpen(true)}
-        />
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 z-30">
+          <LeftRail
+            activeTab={railTab}
+            onTabChange={setRailTab}
+            issuesCount={issues.length || stats?.counts?.validation_issues || 0}
+            onOpenShortcuts={() => setShortcutsOpen(true)}
+          />
+        </div>
 
         {/* ── LEFT DRAWER (FLYOUT PANEL) ── */}
         {railTab && (
-          <aside className="w-80 shrink-0 bg-white border-r border-[#E5E7EB] flex flex-col z-20 min-h-0 shadow-sm animate-in slide-in-from-left-2 duration-150">
+          <aside className="absolute left-[70px] top-[15vh] bottom-[15vh] w-80 bg-white/95 backdrop-blur-md border border-[#E5E7EB] rounded-2xl flex flex-col z-20 min-h-0 shadow-floating animate-in slide-in-from-left-2 duration-150 overflow-hidden">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between px-3 h-10 border-b border-[#E5E7EB] shrink-0 bg-[#F9FAFB]">
+            <div className="flex items-center justify-between px-3 h-10 border-b border-[#E5E7EB] shrink-0 bg-[#F9FAFB]/80">
               <div className="flex items-center gap-2 text-xs font-semibold text-[#0F172A]">
                 {railTab === "explore" && <MapPin className="w-4 h-4 text-[#4F46E5]" />}
                 {railTab === "layers" && <Layers className="w-4 h-4 text-[#4F46E5]" />}
@@ -2027,7 +2029,7 @@ export default function MapApp() {
         )}
 
         {/* ── CENTER: MAP CANVAS ── */}
-        <div className="flex-1 relative min-w-0">
+        <div className="absolute inset-0 z-0">
           <div ref={mapContainer} style={{ width: "100%", height: "100%" }} className="bg-white" />
 
           {loading && (
@@ -2189,7 +2191,7 @@ export default function MapApp() {
 
         {/* ── RIGHT INSPECTOR DRAWER (WHEN A FEATURE IS SELECTED) ── */}
         {selected && (
-          <aside className="w-80 md:w-96 shrink-0 bg-white border-l border-[#E5E7EB] flex flex-col z-20 min-h-0 shadow-floating animate-in slide-in-from-right-2 duration-150">
+          <aside className="absolute right-3 top-[15vh] bottom-[15vh] w-80 md:w-96 bg-white/95 backdrop-blur-md border border-[#E5E7EB] rounded-2xl flex flex-col z-20 min-h-0 shadow-floating animate-in slide-in-from-right-2 duration-150 overflow-hidden">
             <FeatureInspector
               selected={selected}
               activeColony={activeColony}

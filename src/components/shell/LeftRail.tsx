@@ -41,9 +41,9 @@ export function LeftRail({
   };
 
   return (
-    <aside className="w-14 bg-white border-r border-[#E5E7EB] flex flex-col items-center py-3 select-none z-20 flex-shrink-0">
+    <aside className="rounded-2xl bg-white/95 backdrop-blur-md border border-[#E5E7EB] shadow-floating flex flex-col items-center py-2 px-1 select-none z-20 flex-shrink-0">
       <TooltipProvider delayDuration={150}>
-        <div className="flex flex-col items-center gap-1.5 w-full px-2">
+        <div className="flex flex-col items-center gap-1.5 w-full">
           {appView === 'map' ? (
             <>
               {/* Explore / Colonies */}
@@ -117,7 +117,7 @@ export function LeftRail({
         </div>
 
         {/* Bottom Help / Shortcuts */}
-        <div className="mt-auto flex flex-col items-center w-full px-2 pt-2 border-t border-[#F3F4F6]">
+        <div className="mt-1 flex flex-col items-center w-full px-1 pt-1.5 border-t border-[#F3F4F6]">
           <RailButton
             icon={<HelpCircle className="w-4 h-4" strokeWidth={1.5} />}
             label="Shortcuts & Documentation (?)"

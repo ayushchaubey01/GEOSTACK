@@ -162,198 +162,236 @@ export default function Hud({ booted }: HudProps) {
         </div>
       </motion.header>
 
-      {/* ── Left floor card ────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {isFloorVisible && floor && (
-          <motion.aside
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-64 pointer-events-auto"
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          >
-            <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-panel overflow-hidden">
-              {/* Header */}
-              <div className="px-4 py-3 border-b border-[#F3F4F6] bg-[#F9FAFB]">
-                <div className="flex items-center justify-between mb-1 gap-1 flex-wrap">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <StatusBadge
-                      tone={floor.isUnderground ? 'warning' : 'indigo'}
-                      variant="soft"
-                    >
-                      {floor.usage === 'parking' ? 'Parking basement' : floor.usage === 'utility' ? 'Utility floor' : 'Residential floor'}
-                    </StatusBadge>
-                    {floor.usage === 'parking' && (
-                      <StatusBadge tone="indigo" variant="soft">
-                        Synthetic demo vehicles
+      {/* ── Left column: Back button + Floor card (stacked cleanly, never overlap) ── */}
+      <div className="absolute left-3 top-20 bottom-12 z-30 flex flex-col justify-start gap-3 pointer-events-none w-72">
+        {/* Back Button */}
+        <AnimatePresence>
+          {(phase === 'extracted' || phase === 'floor_selecting') && (
+            <motion.button
+              className="pointer-events-auto self-start mb-2 flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
+              onClick={handleReturnToOverview}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              aria-label="Return to building overview"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Building Overview</span>
+            </motion.button>
+          )}
+          {(phase === 'floor_inspecting' || phase === 'floor_inspect_selecting') && (
+            <motion.button
+              className="pointer-events-auto self-start mb-2 flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
+              onClick={handleReturnToExtracted}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              aria-label="Return to floor beside building view"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Floor Beside Building</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* Floor Card */}
+        <AnimatePresence>
+          {isFloorVisible && floor && (
+            <motion.aside
+              className="pointer-events-auto w-full max-h-[calc(70vh-40px)] flex flex-col"
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <div className="rounded-2xl border border-[#E5E7EB] bg-white shadow-panel overflow-hidden flex flex-col max-h-full">
+                {/* Header */}
+                <div className="px-4 py-3 border-b border-[#F3F4F6] bg-[#F9FAFB] flex-shrink-0">
+                  <div className="flex items-center justify-between mb-1 gap-1 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <StatusBadge
+                        tone={floor.isUnderground ? 'warning' : 'indigo'}
+                        variant="soft"
+                      >
+                        {floor.usage === 'parking' ? 'Parking basement' : floor.usage === 'utility' ? 'Utility floor' : 'Residential floor'}
                       </StatusBadge>
-                    )}
-                    {floor.usage === 'residential' && (
-                      plan?.areaScale === 1 ? (
-                        <StatusBadge tone="neutral" variant="soft">
-                          Drawn to scale
+                      {floor.usage === 'parking' && (
+                        <StatusBadge tone="indigo" variant="soft">
+                          Synthetic demo vehicles
                         </StatusBadge>
-                      ) : (
-                        <StatusBadge tone="warning" variant="soft">
-                          Schematic: sizes approx
-                        </StatusBadge>
-                      )
+                      )}
+                      {floor.usage === 'residential' && (
+                        plan?.areaScale === 1 ? (
+                          <StatusBadge tone="neutral" variant="soft">
+                            Drawn to scale
+                          </StatusBadge>
+                        ) : (
+                          <StatusBadge tone="warning" variant="soft">
+                            Schematic: sizes approx
+                          </StatusBadge>
+                        )
+                      )}
+                    </div>
+                    <span className="font-mono-nums text-xs font-semibold text-[#4F46E5]">
+                      {floor.isUnderground ? `B${Math.abs(floor.floorNumber)}` : `F${floor.floorNumber >= 0 ? '+' : ''}${floor.floorNumber.toString().padStart(2, '0')}`}
+                    </span>
+                  </div>
+                  <div className="text-xl font-semibold text-[#0F172A]" style={{ letterSpacing: '-0.02em' }}>
+                    {floor.label}
+                  </div>
+                </div>
+
+                {/* Scrollable body */}
+                <div className="overflow-y-auto flex-1 custom-scroll">
+                  {/* Stats grid */}
+                  {floor.usage === 'parking' ? (
+                    <div className="px-4 py-3 grid grid-cols-2 gap-2">
+                      <Metric label="Slots" value={String(floor.units.length)} />
+                      <Metric label="Slot area" value={`${floor.units.reduce((acc, u) => acc + u.builtUpArea, 0).toFixed(1)} m²`} />
+                    </div>
+                  ) : floor.usage === 'utility' ? (
+                    <div className="px-4 py-3 grid grid-cols-2 gap-2">
+                      <Metric label="Rooms" value="3" />
+                      <Metric label="Floor area" value={`${floor.floorArea} m²`} />
+                    </div>
+                  ) : (
+                    <div className="px-4 py-3 grid grid-cols-3 gap-2">
+                      <Metric label="Gross area" value={`${floor.floorArea} m²`} />
+                      <Metric label="Flats built-up" value={`${floor.flatsBuiltUp ?? 272} m²`} />
+                      <Metric label="Common area" value={`${floor.commonArea ?? 48} m²`} />
+                    </div>
+                  )}
+
+                  {/* Usage + Vertical ID */}
+                  <div className="px-4 pb-3 space-y-2">
+                    {floor.usage && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">Usage</span>
+                        <StatusBadge tone="neutral" variant="soft">{floor.usage}</StatusBadge>
+                      </div>
                     )}
-                  </div>
-                  <span className="font-mono-nums text-xs font-semibold text-[#4F46E5]">
-                    {floor.isUnderground ? `B${Math.abs(floor.floorNumber)}` : `F${floor.floorNumber >= 0 ? '+' : ''}${floor.floorNumber.toString().padStart(2, '0')}`}
-                  </span>
-                </div>
-                <div className="text-xl font-semibold text-[#0F172A]" style={{ letterSpacing: '-0.02em' }}>
-                  {floor.label}
-                </div>
-              </div>
 
-              {/* Stats grid */}
-              {floor.usage === 'parking' ? (
-                <div className="px-4 py-3 grid grid-cols-2 gap-2">
-                  <Metric label="Slots" value={String(floor.units.length)} />
-                  <Metric label="Slot area" value={`${floor.units.reduce((acc, u) => acc + u.builtUpArea, 0).toFixed(1)} m²`} />
-                </div>
-              ) : floor.usage === 'utility' ? (
-                <div className="px-4 py-3 grid grid-cols-2 gap-2">
-                  <Metric label="Rooms" value="3" />
-                  <Metric label="Floor area" value={`${floor.floorArea} m²`} />
-                </div>
-              ) : (
-                <div className="px-4 py-3 grid grid-cols-3 gap-2">
-                  <Metric label="Gross area" value={`${floor.floorArea} m²`} />
-                  <Metric label="Flats built-up" value={`${floor.flatsBuiltUp ?? 272} m²`} />
-                  <Metric label="Common area" value={`${floor.commonArea ?? 48} m²`} />
-                </div>
-              )}
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280] mb-1">
+                        Prototype floor ID
+                      </div>
+                      <CopyableCode value={floor.ulpin} short className="text-[11px]" />
+                      <div className="text-[11px] text-[#9CA3AF] mt-1">
+                        Internal prototype ID — not an official ULPIN
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Usage + Vertical ID */}
-              <div className="px-4 pb-3 space-y-2">
-                {floor.usage && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">Usage</span>
-                    <StatusBadge tone="neutral" variant="soft">{floor.usage}</StatusBadge>
-                  </div>
-                )}
+                  {/* Units / Slots list */}
+                  <div className="border-t border-[#F3F4F6] px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">
+                        {floor.usage === 'parking' ? 'Slots on floor' : 'Units on floor'}
+                      </div>
+                      <StatusBadge tone="warning" variant="dashed" tooltip="Synthetic demo data — derived layout">
+                        Synthetic demo data
+                      </StatusBadge>
+                    </div>
 
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280] mb-1">
-                    Prototype floor ID
-                  </div>
-                  <CopyableCode value={floor.ulpin} short className="text-[11px]" />
-                  <div className="text-[11px] text-[#9CA3AF] mt-1">
-                    Internal prototype ID — not an official ULPIN
-                  </div>
-                </div>
-              </div>
-
-              {/* Units / Slots list */}
-              <div className="border-t border-[#F3F4F6] px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">
-                    {floor.usage === 'parking' ? 'Slots on floor' : 'Units on floor'}
-                  </div>
-                  <StatusBadge tone="warning" variant="dashed" tooltip="Synthetic demo data — derived layout">
-                    Synthetic demo data
-                  </StatusBadge>
-                </div>
-
-                {floor.usage === 'parking' ? (
-                  <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1">
-                    {floor.units.map((u) => {
-                      const isSelected = selectedUnitId === u.unitId;
-                      return (
-                        <button
-                          key={u.unitId}
-                          onClick={() => useViewerStore.setState({ selectedUnitId: isSelected ? null : u.unitId })}
-                          className={`flex justify-between items-center px-2 py-1.5 rounded-lg text-left border transition-colors ${
-                            isSelected
-                              ? 'bg-[#EEF2FF] border-[#6366F1] text-[#4F46E5]'
-                              : 'bg-white border-[#E5E7EB] text-[#374151] hover:border-[#C7D2FE]'
-                          }`}
-                        >
-                          <span className="font-mono-nums text-xs font-semibold">Slot {u.displayId}</span>
-                          <span className="text-[11px] text-[#6B7280] font-mono-nums">
-                            {u.occupiedDemo ? '🚗 Busy' : 'Free'}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {[...floor.units]
-                      .sort((a, b) => {
-                        const slotOrder = ['NE', 'NW', 'SW', 'SE'];
-                        return slotOrder.indexOf(a.slot ?? '') - slotOrder.indexOf(b.slot ?? '');
-                      })
-                      .map((u) => {
-                        const isSelected = selectedUnitId === u.unitId;
-                        return (
-                          <button
-                            key={u.unitId}
-                            onClick={() => useViewerStore.setState({ selectedUnitId: isSelected ? null : u.unitId })}
-                            className={`w-full flex justify-between items-center px-2 py-1.5 rounded-lg text-left border transition-colors ${
-                              isSelected
-                                ? 'bg-[#EEF2FF] border-[#6366F1] text-[#4F46E5]'
-                                : 'bg-white border-[#F3F4F6] hover:bg-[#F9FAFB] text-[#374151]'
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-mono-nums text-xs font-semibold">
-                                Flat {u.displayId}
+                    {floor.usage === 'parking' ? (
+                      <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pr-1">
+                        {floor.units.map((u) => {
+                          const isSelected = selectedUnitId === u.unitId;
+                          return (
+                            <button
+                              key={u.unitId}
+                              onClick={() => useViewerStore.setState({ selectedUnitId: isSelected ? null : u.unitId })}
+                              className={`flex justify-between items-center px-2 py-1.5 rounded-lg text-left border transition-colors ${
+                                isSelected
+                                  ? 'bg-[#EEF2FF] border-[#6366F1] text-[#4F46E5]'
+                                  : 'bg-white border-[#E5E7EB] text-[#374151] hover:border-[#C7D2FE]'
+                              }`}
+                            >
+                              <span className="font-mono-nums text-xs font-semibold">Slot {u.displayId}</span>
+                              <span className="text-[11px] text-[#6B7280] font-mono-nums">
+                                {u.occupiedDemo ? '🚗 Busy' : 'Free'}
                               </span>
-                              {u.slot && (
-                                <span className="text-[10px] px-1 py-0.2 rounded bg-slate-100 text-slate-500 font-mono">
-                                  {u.slot}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-mono-nums tabular-nums">
-                              <span className="text-[#374151] font-medium">{u.builtUpArea} m²</span>
-                              <span className="text-[#9CA3AF] text-[11px]">({u.carpetArea} m² carpet)</span>
-                            </div>
-                          </button>
-                        );
-                      })}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {[...floor.units]
+                          .sort((a, b) => {
+                            const slotOrder = ['NE', 'NW', 'SW', 'SE'];
+                            return slotOrder.indexOf(a.slot ?? '') - slotOrder.indexOf(b.slot ?? '');
+                          })
+                          .map((u) => {
+                            const isSelected = selectedUnitId === u.unitId;
+                            return (
+                              <button
+                                key={u.unitId}
+                                onClick={() => useViewerStore.setState({ selectedUnitId: isSelected ? null : u.unitId })}
+                                className={`w-full flex justify-between items-center px-2 py-1.5 rounded-lg text-left border transition-colors ${
+                                  isSelected
+                                    ? 'bg-[#EEF2FF] border-[#6366F1] text-[#4F46E5]'
+                                    : 'bg-white border-[#F3F4F6] hover:bg-[#F9FAFB] text-[#374151]'
+                                }`}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono-nums text-xs font-semibold">
+                                    Flat {u.displayId}
+                                  </span>
+                                  {u.slot && (
+                                    <span className="text-[10px] px-1 py-0.2 rounded bg-slate-100 text-slate-500 font-mono">
+                                      {u.slot}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs font-mono-nums tabular-nums">
+                                  <span className="text-[#374151] font-medium">{u.builtUpArea} m²</span>
+                                  <span className="text-[#9CA3AF] text-[11px]">({u.carpetArea} m² carpet)</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action: Open separate floor view */}
+                {(phase === 'extracted' || phase === 'floor_selecting') && (
+                  <div className="border-t border-[#F3F4F6] px-4 py-3 bg-[#F9FAFB] flex-shrink-0">
+                    <button
+                      onClick={() => setPhase('floor_inspect_selecting')}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#4F46E5] text-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-[#4338CA] transition-all focus-ring"
+                      aria-label="Inspect floor layout in separate view"
+                    >
+                      <span>Inspect Floor Layout</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Action: Return to building + floor view */}
+                {(phase === 'floor_inspecting' || phase === 'floor_inspect_selecting') && (
+                  <div className="border-t border-[#F3F4F6] px-4 py-3 bg-[#F9FAFB] flex-shrink-0">
+                    <button
+                      onClick={handleReturnToExtracted}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-white text-[#374151] px-3 py-2 text-xs font-semibold shadow-sm hover:bg-[#F9FAFB] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all focus-ring"
+                      aria-label="Return to floor beside building view"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Floor Beside Building</span>
+                    </button>
                   </div>
                 )}
               </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+      </div>
 
-              {/* Action: Open separate floor view */}
-              {(phase === 'extracted' || phase === 'floor_selecting') && (
-                <div className="border-t border-[#F3F4F6] px-4 py-3 bg-[#F9FAFB]">
-                  <button
-                    onClick={() => setPhase('floor_inspect_selecting')}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#4F46E5] text-white px-3 py-2 text-xs font-semibold shadow-sm hover:bg-[#4338CA] transition-all focus-ring"
-                    aria-label="Inspect floor layout in separate view"
-                  >
-                    <span>Inspect Floor Layout</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-
-              {/* Action: Return to building + floor view */}
-              {(phase === 'floor_inspecting' || phase === 'floor_inspect_selecting') && (
-                <div className="border-t border-[#F3F4F6] px-4 py-3 bg-[#F9FAFB]">
-                  <button
-                    onClick={handleReturnToExtracted}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-[#E5E7EB] bg-white text-[#374151] px-3 py-2 text-xs font-semibold shadow-sm hover:bg-[#F9FAFB] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all focus-ring"
-                    aria-label="Return to floor beside building view"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Floor Beside Building</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
-      {/* ── Right unit card ─────────────────────────────────────────────── */}
+      {/* ── Right unit card (offset right-28 so it never overlaps the floor strip) ── */}
       <AnimatePresence>
         {selectedUnit && (
           phase === 'extracted' || phase === 'floor_inspect_selecting' ||
@@ -361,22 +399,22 @@ export default function Hud({ booted }: HudProps) {
           phase === 'floor_selecting'
         ) && (
           <motion.aside
-            className="absolute right-16 top-1/2 -translate-y-1/2 w-64 pointer-events-auto"
+            className="absolute right-28 top-1/2 -translate-y-1/2 w-72 max-h-[70vh] pointer-events-auto flex flex-col z-30"
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 24 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
-            <div className="rounded-xl border border-[#C7D2FE] bg-white shadow-panel overflow-hidden ring-1 ring-[#EEF2FF]">
+            <div className="rounded-2xl border border-[#C7D2FE] bg-white shadow-panel overflow-hidden ring-1 ring-[#EEF2FF] flex flex-col max-h-full">
               {/* Header */}
-              <div className="px-4 py-3 border-b border-[#F3F4F6] bg-[#F9FAFB]">
-                <div className="flex items-center justify-between mb-1">
+              <div className="px-4 py-3 border-b border-[#F3F4F6] bg-[#F9FAFB] flex-shrink-0">
+                <div className="flex items-center justify-between mb-1 gap-1 flex-wrap">
                   <StatusBadge tone="indigo" variant="soft">
                     {selectedUnit.isParking ? 'Slot selected' : 'Unit selected'}
                   </StatusBadge>
                   <StatusBadge tone="warning" variant="dashed">Synthetic demo data</StatusBadge>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-1 flex-wrap">
                   <div className="text-xl font-semibold text-[#0F172A]" style={{ letterSpacing: '-0.02em' }}>
                     {selectedUnit.isParking ? 'Slot' : 'Flat'} {selectedUnit.displayId}
                   </div>
@@ -390,118 +428,55 @@ export default function Hud({ booted }: HudProps) {
                 </div>
               </div>
 
-              {/* Metrics */}
-              {selectedUnit.isParking ? (
-                <div className="px-4 py-3 grid grid-cols-2 gap-2">
-                  <Metric label="Slot ID" value={`Slot ${selectedUnit.displayId}`} />
-                  <Metric label="Floor" value={`B${Math.abs(selectedUnit.floorNumber)}`} />
-                  <Metric label="Bay size" value="2.5 × 5.0 m" />
-                  <Metric label="Area" value={`${selectedUnit.carpetArea} m²`} />
-                  <Metric label="Occupied (demo)" value={selectedUnit.occupiedDemo ? 'Yes' : 'No'} />
-                </div>
-              ) : (
-                <div className="px-4 py-3 grid grid-cols-2 gap-2">
-                  <Metric label="Floor" value={`${selectedUnit.floorNumber >= 0 ? '+' : ''}${selectedUnit.floorNumber}`} />
-                  <Metric label="Facing" value={selectedUnit.facing} />
-                  <Metric label="Bedrooms" value={`${selectedUnit.bedrooms} BHK`} />
-                  <Metric label="Bathrooms" value={`${selectedUnit.bathrooms}`} />
-                  <Metric label="Carpet area" value={`${selectedUnit.carpetArea} m²`} />
-                  <Metric label="Built-up" value={`${selectedUnit.builtUpArea.toFixed(1)} m²`} />
-                </div>
-              )}
-
-              {/* Prototype ID */}
-              <div className="px-4 pb-3 space-y-2">
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280] mb-1">
-                    Prototype {selectedUnit.isParking ? 'slot' : 'unit'} ID
+              {/* Scrollable Metrics */}
+              <div className="overflow-y-auto flex-1 custom-scroll">
+                {selectedUnit.isParking ? (
+                  <div className="px-4 py-3 grid grid-cols-2 gap-2">
+                    <Metric label="Slot ID" value={`Slot ${selectedUnit.displayId}`} />
+                    <Metric label="Floor" value={`B${Math.abs(selectedUnit.floorNumber)}`} />
+                    <Metric label="Bay size" value="2.5 × 5.0 m" />
+                    <Metric label="Area" value={`${selectedUnit.carpetArea} m²`} />
+                    <Metric label="Occupied (demo)" value={selectedUnit.occupiedDemo ? 'Yes' : 'No'} />
                   </div>
-                  <CopyableCode value={selectedUnit.ulpin} short className="text-[11px]" />
-                  <div className="text-[11px] text-[#9CA3AF] mt-1">
-                    Internal prototype ID — not an official ULPIN
-                  </div>
-                </div>
-
-                {/* Owner name — deprioritised, ONLY for residential flats */}
-                {!selectedUnit.isParking && selectedUnit.ownerName && selectedUnit.ownerName !== 'Parking Slot' && (
-                  <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg px-3 py-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#B45309] mb-0.5">
-                      Occupant (demo only)
-                    </div>
-                    <div className="text-xs text-[#6B7280]">{selectedUnit.ownerName}</div>
-                    <div className="text-[11px] text-[#B45309] mt-0.5">
-                      Synthetic demo data — real owner data not collected
-                    </div>
+                ) : (
+                  <div className="px-4 py-3 grid grid-cols-2 gap-2">
+                    <Metric label="Floor" value={`${selectedUnit.floorNumber >= 0 ? '+' : ''}${selectedUnit.floorNumber}`} />
+                    <Metric label="Facing" value={selectedUnit.facing} />
+                    <Metric label="Bedrooms" value={`${selectedUnit.bedrooms} BHK`} />
+                    <Metric label="Bathrooms" value={`${selectedUnit.bathrooms}`} />
+                    <Metric label="Carpet area" value={`${selectedUnit.carpetArea} m²`} />
+                    <Metric label="Built-up" value={`${selectedUnit.builtUpArea.toFixed(1)} m²`} />
                   </div>
                 )}
+
+                {/* Prototype ID */}
+                <div className="px-4 pb-3 space-y-2">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280] mb-1">
+                      Prototype {selectedUnit.isParking ? 'slot' : 'unit'} ID
+                    </div>
+                    <CopyableCode value={selectedUnit.ulpin} short className="text-[11px]" />
+                    <div className="text-[11px] text-[#9CA3AF] mt-1">
+                      Internal prototype ID — not an official ULPIN
+                    </div>
+                  </div>
+
+                  {/* Owner name — deprioritised, ONLY for residential flats */}
+                  {!selectedUnit.isParking && selectedUnit.ownerName && selectedUnit.ownerName !== 'Parking Slot' && (
+                    <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg px-3 py-2">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#B45309] mb-0.5">
+                        Occupant (demo only)
+                      </div>
+                      <div className="text-xs text-[#6B7280]">{selectedUnit.ownerName}</div>
+                      <div className="text-[11px] text-[#B45309] mt-0.5">
+                        Synthetic demo data — real owner data not collected
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </motion.aside>
-        )}
-      </AnimatePresence>
-
-      {/* ── Floor hover tooltip ─────────────────────────────────────────── */}
-      <AnimatePresence>
-        {tooltipFloor !== null && phase === 'overview' && (
-          <motion.div
-            className="absolute pointer-events-none z-40"
-            style={{ left: mouse.x + 14, top: mouse.y + 14 }}
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ duration: 0.12 }}
-          >
-            <div className="rounded-xl border border-[#C7D2FE] bg-white px-3 py-2 shadow-panel">
-              <div className="text-[11px] uppercase tracking-[0.06em] text-[#6B7280] mb-0.5">Floor</div>
-              <div className="text-sm font-semibold text-[#0F172A] font-mono-nums flex items-center gap-2">
-                {building.floors.find((f) => f.floorNumber === tooltipFloor)?.label}
-                <span className="text-xs text-[#4F46E5]">
-                  {building.floors.find((f) => f.floorNumber === tooltipFloor)?.isUnderground
-                    ? `B${Math.abs(tooltipFloor)}`
-                    : `F${tooltipFloor}`}
-                </span>
-              </div>
-              <div className="text-xs text-[#6B7280] font-mono-nums mt-0.5">
-                {building.floors.find((f) => f.floorNumber === tooltipFloor)?.floorArea} m² gross
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Back to building overview ────────────────────────────────────── */}
-      <AnimatePresence>
-        {(phase === 'extracted' || phase === 'floor_selecting') && (
-          <motion.button
-            className="absolute top-20 left-3 pointer-events-auto flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
-            onClick={handleReturnToOverview}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            aria-label="Return to building overview"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Building Overview
-          </motion.button>
-        )}
-      </AnimatePresence>
-
-      {/* ── Back to floor view ──────────────────────────────────────────── */}
-      <AnimatePresence>
-        {(phase === 'floor_inspecting' || phase === 'floor_inspect_selecting') && (
-          <motion.button
-            className="absolute top-20 left-3 pointer-events-auto flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
-            onClick={handleReturnToExtracted}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            aria-label="Return to floor view"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Floor View
-          </motion.button>
         )}
       </AnimatePresence>
 

@@ -97,7 +97,7 @@ test.describe('3-Step Floor Inspection Flow', () => {
       return !v.isTransitionRunning() && store.getState().phase === 'floor_inspecting';
     }, { timeout: 10000 });
 
-    const returnBesideBtn = page.locator('button:has-text("Floor Beside Building")');
+    const returnBesideBtn = page.locator('button:has-text("Floor Beside Building")').first();
     await expect(returnBesideBtn).toBeVisible();
 
     const state3 = await page.evaluate(() => {

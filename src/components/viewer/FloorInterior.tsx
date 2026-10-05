@@ -419,10 +419,12 @@ export function FloorInterior({
     const targetEast = cx > 1 ? 0.20 : 0.95;
     const targetWest = cx < -1 ? 0.20 : 0.95;
 
+    /* eslint-disable */
     matNorth.opacity += (targetNorth - matNorth.opacity) * 0.1;
     matSouth.opacity += (targetSouth - matSouth.opacity) * 0.1;
     matEast.opacity += (targetEast - matEast.opacity) * 0.1;
     matWest.opacity += (targetWest - matWest.opacity) * 0.1;
+    /* eslint-enable */
   });
 
   // ── Tower X-ray Mode: 2 draw calls per floor ─────────────────────────────
