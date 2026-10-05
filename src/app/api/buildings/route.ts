@@ -3,6 +3,15 @@ import { readFileSync } from "fs";
 import { join } from "path";
 let _c: any = null;
 function lb() { if (!_c) { _c = JSON.parse(readFileSync(join(process.cwd(), "public/data/buildings.geojson"), "utf8")); } return _c; }
+function polyBounds(coords: number[][]) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [x, y] of coords) {
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+  }
+  return { minX, minY, maxX, maxY };
+}
+
 export async function GET(req: NextRequest) {
   const u = req.nextUrl, b = u.searchParams.get("bbox"), l = u.searchParams.get("limit");
   const lim = Math.max(1, Math.min(l ? parseInt(l,10) || 8000 : 8000, 50000));
@@ -17,7 +26,10 @@ export async function GET(req: NextRequest) {
   if (pps) f = f.filter((x:any)=>String(x.properties.parent_parcel_seq)===String(pps));
   if (b) { const p = b.split(",").map(parseFloat);
     if (p.length!==4||p.some(isNaN)) return NextResponse.json({error:"Invalid bbox"},{status:400});
-    const [w,s,e,n] = p; f = f.filter((x:any)=>{const r=x.geometry.coordinates[0][0];return r[0]>=w&&r[0]<=e&&r[1]>=s&&r[1]<=n;}); }
+    const [w,s,e,n] = p; f = f.filter((x:any)=>{
+      const { minX, minY, maxX, maxY } = polyBounds(x.geometry.coordinates[0]);
+      return maxX >= w && minX <= e && maxY >= s && minY <= n;
+    }); }
   if (ms) f = f.filter((x:any)=>x.properties.match_status===ms);
   if (wh) f = f.filter((x:any)=>x.properties.height_m!=null);
   if (mf) { const n=parseInt(mf,10); if(!isNaN(n)) f=f.filter((x:any)=>Number(x.properties.floors)>=n); }
