@@ -283,7 +283,7 @@ export default function MapLanding() {
               3D ULPIN · Vertical Property Mapping
             </div>
             <div className="text-sm font-medium text-white">
-              {level === 'overview' ? 'Bengaluru Pilot AOI — 24 Areas' : activeColony?.name}
+              {level === 'overview' ? 'Bengaluru — 24 Areas' : activeColony?.name}
             </div>
           </div>
         </div>

@@ -44,13 +44,7 @@ export function StatusBar({
         )}
       </div>
 
-      {/* ── Center: Mandatory Honesty Notice ── */}
-      <div className="flex items-center gap-1.5 text-[#B45309] font-medium truncate px-2">
-        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-        <span className="truncate">
-          Academic Prototype · Not Official ULPINs · LoD1 Estimates
-        </span>
-      </div>
+
 
       {/* ── Right: Attribution ── */}
       <div className="flex items-center gap-2 truncate text-right">

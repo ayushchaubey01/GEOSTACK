@@ -48,6 +48,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { AddFeatureButtons, AddFeatureDialog } from "./draw-tools/AddFeatureFlow";
 import { FeatureInspector } from "@/components/inspector/FeatureInspector";
 import { TopBar } from "@/components/shell/TopBar";
 import { LeftRail } from "@/components/shell/LeftRail";
@@ -374,6 +375,10 @@ export default function MapApp() {
   const [drawFeatures, setDrawFeatures] = useState<any[]>([]);
   const [drawLabel, setDrawLabel] = useState("");
   const [showDrawDialog, setShowDrawDialog] = useState(false);
+  
+  const [addFeatureType, setAddFeatureType] = useState<"building" | "parcel" | null>(null);
+  const [showAddFeatureDialog, setShowAddFeatureDialog] = useState(false);
+  const [addFeatureGeom, setAddFeatureGeom] = useState<any>(null);
 
   // ── Buffer analysis state ───────────────────────────────────────────────
   const [showBufferDialog, setShowBufferDialog] = useState(false);
@@ -653,6 +658,21 @@ export default function MapApp() {
       map.addSource("draw-current", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("buffer-circle", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("highlight", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+
+      // ── Grid source for 3D extrusion background ───────────
+      const gridLines: any[] = [];
+      const step = 0.0005;
+      for (let lng = 77.4; lng <= 77.9; lng += step) gridLines.push([[lng, 12.8], [lng, 13.15]]);
+      for (let lat = 12.8; lat <= 13.15; lat += step) gridLines.push([[77.4, lat], [77.9, lat]]);
+      map.addSource("mesh-grid", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: gridLines.map(c => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: c } }))
+        }
+      });
+      map.addLayer({ id: "mesh-grid-bg", type: "background", paint: { "background-color": "#F3F4F6" }, layout: { visibility: "none" } });
+      map.addLayer({ id: "mesh-grid-lines", type: "line", source: "mesh-grid", paint: { "line-color": "#E5E7EB", "line-width": 1 }, layout: { visibility: "none" } });
 
       // ── AOI outline ─────────────────────────────────────────────────────
       map.addLayer({ id: "aoi-outline", type: "line", source: "aoi",
@@ -1026,6 +1046,13 @@ export default function MapApp() {
     setVis("buildings-3d", showBuildings3D);
     setVis("buildings-heatmap", showHeatmap);
 
+    const hideBasemaps = pitch3D && !heatmapMode;
+    for (const id of ["osm-basemap", "osm-blue-tint", "satellite-basemap", "satellite-labels", "carto-basemap", "carto-dark-basemap"]) {
+      setVis(id, !hideBasemaps);
+    }
+    setVis("mesh-grid-bg", hideBasemaps);
+    setVis("mesh-grid-lines", hideBasemaps);
+
     // Pitch animation
     if (pitch3D && !heatmapMode) {
       map.easeTo({ pitch: 55, duration: 600 });
@@ -1168,8 +1195,8 @@ export default function MapApp() {
 
     // Load data for this colony's bbox
     const bbox = `${colony.bbox[0]},${colony.bbox[1]},${colony.bbox[2]},${colony.bbox[3]}`;
-    fetch(`/api/parcels?bbox=${bbox}&limit=3000`).then(r => r.json()).then(d => { (map.getSource("parcels") as maplibregl.GeoJSONSource)?.setData(d); }).catch(() => {});
-    fetch(`/api/buildings?bbox=${bbox}&limit=8000`).then(r => r.json()).then(d => { (map.getSource("buildings") as maplibregl.GeoJSONSource)?.setData(d); }).catch(() => {});
+    fetch(`/api/parcels?bbox=${bbox}&limit=3000`).then(r => r.json()).then(d => { (window as any).__currentParcels = d; (map.getSource("parcels") as maplibregl.GeoJSONSource)?.setData(d); }).catch(() => {});
+    fetch(`/api/buildings?bbox=${bbox}&limit=8000`).then(r => r.json()).then(d => { (window as any).__currentBuildings = d; (map.getSource("buildings") as maplibregl.GeoJSONSource)?.setData(d); }).catch(() => {});
     fetch(`/api/roads?bbox=${bbox}&limit=5000`).then(r => r.json()).then(d => { (map.getSource("roads") as maplibregl.GeoJSONSource)?.setData(d); }).catch(() => {});
 
     toast(`Entered ${colony.name}`);
@@ -1287,17 +1314,62 @@ export default function MapApp() {
 
   // Drawing finish
   const finishDraw = () => {
-    if (drawPoints.length < 1) { setDrawMode("none"); setDrawPoints([]); updateDrawCurrentLayer([]); return; }
+    if (drawPoints.length < 1) { setDrawMode("none"); setDrawPoints([]); updateDrawCurrentLayer([]); setAddFeatureType(null); return; }
     const geom = drawMode === "polygon" && drawPoints.length >= 3
       ? { type: "Polygon", coordinates: [[...drawPoints, drawPoints[0]]] }
       : drawMode === "line" && drawPoints.length >= 2
       ? { type: "LineString", coordinates: drawPoints }
       : { type: "Point", coordinates: drawPoints[0] };
+      
+    if (addFeatureType && drawMode === "polygon" && drawPoints.length >= 3) {
+      if (checkSelfIntersection(drawPoints)) {
+        toast("Polygon cannot self-intersect. Please try again.");
+        setDrawPoints([]); updateDrawCurrentLayer([]);
+        return;
+      }
+      setAddFeatureGeom(geom);
+      setShowAddFeatureDialog(true);
+      setDrawPoints([]); setDrawMode("none"); updateDrawCurrentLayer([]);
+      return;
+    }
+
     setDrawFeatures(prev => [...prev, { type: "Feature", geometry: geom, properties: { label: drawLabel || `Draw ${prev.length + 1}`, mode: drawMode } }]);
     (mapRef.current?.getSource("draw-features") as maplibregl.GeoJSONSource)?.setData({ type: "FeatureCollection", features: [...drawFeatures, { type: "Feature", geometry: geom, properties: { label: drawLabel || `Draw ${drawFeatures.length + 1}`, mode: drawMode } }] });
-    setDrawPoints([]); setDrawMode("none"); updateDrawCurrentLayer([]); setShowDrawDialog(false); setDrawLabel("");
+    setDrawPoints([]); setDrawMode("none"); updateDrawCurrentLayer([]); setShowDrawDialog(false); setDrawLabel(""); setAddFeatureType(null);
   };
-  const cancelDraw = () => { setDrawPoints([]); setDrawMode("none"); updateDrawCurrentLayer([]); setShowDrawDialog(false); };
+  const cancelDraw = () => { setDrawPoints([]); setDrawMode("none"); updateDrawCurrentLayer([]); setShowDrawDialog(false); setAddFeatureType(null); };
+
+  function checkSelfIntersection(points: [number, number][]) {
+    const pts = [...points, points[0]];
+    const ccw = (A: number[], B: number[], C: number[]) => (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0]);
+    const intersect = (A: number[], B: number[], C: number[], D: number[]) => ccw(A,C,D) !== ccw(B,C,D) && ccw(A,B,C) !== ccw(A,B,D);
+    for (let i = 0; i < pts.length - 1; i++) {
+      for (let j = i + 2; j < pts.length - 1; j++) {
+        if (i === 0 && j === pts.length - 2) continue; // adjacent at start/end
+        if (intersect(pts[i], pts[i+1], pts[j], pts[j+1])) return true;
+      }
+    }
+    return false;
+  }
+
+  const handleSaveFeature = (feature: any) => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (addFeatureType === "building") {
+      const d = (window as any).__currentBuildings || { type: "FeatureCollection", features: [] };
+      d.features.push(feature);
+      (window as any).__currentBuildings = d;
+      (map.getSource("buildings") as maplibregl.GeoJSONSource)?.setData(d);
+      toast("Building added temporarily.");
+    } else if (addFeatureType === "parcel") {
+      const d = (window as any).__currentParcels || { type: "FeatureCollection", features: [] };
+      d.features.push(feature);
+      (window as any).__currentParcels = d;
+      (map.getSource("parcels") as maplibregl.GeoJSONSource)?.setData(d);
+      toast("Parcel added temporarily.");
+    }
+    setAddFeatureType(null);
+  };
   const clearDraw = () => { setDrawFeatures([]); (mapRef.current?.getSource("draw-features") as maplibregl.GeoJSONSource)?.setData({ type: "FeatureCollection", features: [] }); };
 
   // Buffer analysis
@@ -1489,7 +1561,7 @@ export default function MapApp() {
 
         {/* ── LEFT DRAWER (FLYOUT PANEL) ── */}
         {railTab && (
-          <aside className="absolute left-[70px] top-[15vh] bottom-[15vh] w-80 bg-white/95 backdrop-blur-md border border-[#E5E7EB] rounded-2xl flex flex-col z-20 min-h-0 shadow-floating animate-in slide-in-from-left-2 duration-150 overflow-hidden">
+          <aside className="absolute left-1/2 -translate-x-1/2 sm:left-[70px] sm:translate-x-0 top-24 bottom-24 sm:top-[15vh] sm:bottom-[15vh] w-[85vw] max-w-[320px] sm:w-80 bg-white/95 backdrop-blur-md border border-[#E5E7EB] rounded-2xl flex flex-col z-20 min-h-0 shadow-floating animate-in fade-in zoom-in-95 sm:slide-in-from-left-2 duration-150 overflow-hidden">
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-3 h-10 border-b border-[#E5E7EB] shrink-0 bg-[#F9FAFB]/80">
               <div className="flex items-center gap-2 text-xs font-semibold text-[#0F172A]">
@@ -1763,6 +1835,11 @@ export default function MapApp() {
                       >
                         <ArrowLeftRight className="w-3.5 h-3.5" /> Compare
                       </button>
+                      <AddFeatureButtons 
+                        activeMode={addFeatureType}
+                        onAddBuilding={() => { setDrawMode("polygon"); setAddFeatureType("building"); }}
+                        onAddParcel={() => { setDrawMode("polygon"); setAddFeatureType("parcel"); }}
+                      />
                     </div>
                     <button
                       className="w-full flex items-center justify-center gap-1.5 text-xs py-2 px-3 rounded-xl border border-[#E5E7EB] bg-white text-[#0F172A] hover:bg-[#F9FAFB] font-medium transition cursor-pointer"
@@ -2036,7 +2113,7 @@ export default function MapApp() {
                   </>
                 )}
                 <Separator className="bg-[#E5E7EB] my-1" />
-                <div className="flex items-center gap-2"><span className="w-3 h-3 border border-dashed border-[#4F46E5]" style={{ background: "rgba(79,70,229,0.08)" }} /><span className="text-[#0F172A]">Pilot AOI (6.66 km²)</span></div>
+
               </div>
             </div>
           )}
@@ -2103,7 +2180,7 @@ export default function MapApp() {
 
         {/* ── RIGHT INSPECTOR DRAWER (WHEN A FEATURE IS SELECTED) ── */}
         {selected && (
-          <aside className="absolute right-3 top-[15vh] bottom-[15vh] w-80 md:w-96 bg-white/95 backdrop-blur-md border border-[#E5E7EB] rounded-2xl flex flex-col z-20 min-h-0 shadow-floating animate-in slide-in-from-right-2 duration-150 overflow-hidden">
+          <aside className="absolute left-1/2 -translate-x-1/2 md:left-auto md:right-3 md:translate-x-0 top-24 bottom-24 md:top-[15vh] md:bottom-[15vh] w-[85vw] max-w-[320px] md:w-96 bg-white/95 backdrop-blur-md border border-[#E5E7EB] rounded-2xl flex flex-col z-20 min-h-0 shadow-floating animate-in fade-in zoom-in-95 md:slide-in-from-right-2 duration-150 overflow-hidden">
             <FeatureInspector
               selected={selected}
               activeColony={activeColony}
@@ -2468,6 +2545,14 @@ export default function MapApp() {
           </ModalOverlay>
         );
       })()}
+
+      <AddFeatureDialog
+        isOpen={showAddFeatureDialog}
+        type={addFeatureType}
+        geometry={addFeatureGeom}
+        onClose={() => { setShowAddFeatureDialog(false); setAddFeatureType(null); }}
+        onSave={handleSaveFeature}
+      />
     </div>
   );
 }

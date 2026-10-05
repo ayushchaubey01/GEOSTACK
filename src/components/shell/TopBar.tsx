@@ -180,28 +180,7 @@ export function TopBar({
           </TooltipProvider>
         </div>
 
-        {/* Phase 1 · Prototype Soft Badge with Popover */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="cursor-pointer focus-ring rounded-full">
-              <StatusBadge tone="warning" variant="soft" className="hover:opacity-90 transition-opacity">
-                Phase 1 · Prototype
-              </StatusBadge>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-4 rounded-xl shadow-floating bg-white border border-[#E5E7EB] text-xs space-y-2">
-            <div className="flex items-start gap-2 text-[#B45309] font-medium">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>Honesty & Data Provenance Notice</span>
-            </div>
-            <p className="text-[#6B7280] leading-relaxed">
-              This is an academic research prototype (SIH26011). Identifiers are <strong>internal prototype IDs, not official ULPINs</strong> issued by the Department of Land Resources (DoLR).
-            </p>
-            <p className="text-[#6B7280] leading-relaxed">
-              Building heights and floor counts are <strong>LoD1 estimated values</strong> derived from 3D-GloBFP and Copernicus DSM data. No live government ownership records or official floor plans are implied.
-            </p>
-          </PopoverContent>
-        </Popover>
+
 
         {/* Share Button */}
         <button

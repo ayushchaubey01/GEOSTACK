@@ -120,9 +120,7 @@ export default function Hud({ booted }: HudProps) {
           <span>{building.locality}</span>
           <span className="text-[#D1D5DB]">›</span>
           <span className="font-mono-nums text-[#4F46E5]">{building.ulpin}</span>
-          <StatusBadge tone="warning" variant="dashed" className="ml-2">
-            Synthetic demo data
-          </StatusBadge>
+
         </div>
 
         {/* Right: X-ray + Back to map */}
@@ -168,7 +166,7 @@ export default function Hud({ booted }: HudProps) {
         <AnimatePresence>
           {(phase === 'extracted' || phase === 'floor_selecting') && (
             <motion.button
-              className="pointer-events-auto self-start mb-2 flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
+              className="shrink-0 pointer-events-auto self-start flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
               onClick={handleReturnToOverview}
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -182,7 +180,7 @@ export default function Hud({ booted }: HudProps) {
           )}
           {(phase === 'floor_inspecting' || phase === 'floor_inspect_selecting') && (
             <motion.button
-              className="pointer-events-auto self-start mb-2 flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
+              className="shrink-0 pointer-events-auto self-start flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-medium text-[#6B7280] hover:border-[#6366F1] hover:text-[#4F46E5] transition-all shadow-card focus-ring"
               onClick={handleReturnToExtracted}
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -200,7 +198,7 @@ export default function Hud({ booted }: HudProps) {
         <AnimatePresence>
           {isFloorVisible && floor && (
             <motion.aside
-              className="pointer-events-auto w-full max-h-[calc(70vh-40px)] flex flex-col"
+              className="pointer-events-auto w-full max-h-[calc(70vh-40px)] flex flex-col min-h-0"
               initial={{ opacity: 0, x: -24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
@@ -217,11 +215,7 @@ export default function Hud({ booted }: HudProps) {
                       >
                         {floor.usage === 'parking' ? 'Parking basement' : floor.usage === 'utility' ? 'Utility floor' : 'Residential floor'}
                       </StatusBadge>
-                      {floor.usage === 'parking' && (
-                        <StatusBadge tone="indigo" variant="soft">
-                          Synthetic demo vehicles
-                        </StatusBadge>
-                      )}
+
                       {floor.usage === 'residential' && (
                         plan?.areaScale === 1 ? (
                           <StatusBadge tone="neutral" variant="soft">
@@ -290,9 +284,7 @@ export default function Hud({ booted }: HudProps) {
                       <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">
                         {floor.usage === 'parking' ? 'Slots on floor' : 'Units on floor'}
                       </div>
-                      <StatusBadge tone="warning" variant="dashed" tooltip="Synthetic demo data — derived layout">
-                        Synthetic demo data
-                      </StatusBadge>
+
                     </div>
 
                     {floor.usage === 'parking' ? (
@@ -399,7 +391,7 @@ export default function Hud({ booted }: HudProps) {
           phase === 'floor_selecting'
         ) && (
           <motion.aside
-            className="absolute right-28 top-1/2 -translate-y-1/2 w-72 max-h-[70vh] pointer-events-auto flex flex-col z-30"
+            className="absolute left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-28 top-1/2 -translate-y-1/2 w-[85vw] max-w-[280px] md:w-72 max-h-[70vh] pointer-events-auto flex flex-col z-30 min-h-0"
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 24 }}
@@ -412,7 +404,6 @@ export default function Hud({ booted }: HudProps) {
                   <StatusBadge tone="indigo" variant="soft">
                     {selectedUnit.isParking ? 'Slot selected' : 'Unit selected'}
                   </StatusBadge>
-                  <StatusBadge tone="warning" variant="dashed">Synthetic demo data</StatusBadge>
                 </div>
                 <div className="flex items-center justify-between gap-1 flex-wrap">
                   <div className="text-xl font-semibold text-[#0F172A]" style={{ letterSpacing: '-0.02em' }}>
@@ -468,9 +459,7 @@ export default function Hud({ booted }: HudProps) {
                         Occupant (demo only)
                       </div>
                       <div className="text-xs text-[#6B7280]">{selectedUnit.ownerName}</div>
-                      <div className="text-[11px] text-[#B45309] mt-0.5">
-                        Synthetic demo data — real owner data not collected
-                      </div>
+
                     </div>
                   )}
                 </div>
@@ -495,15 +484,7 @@ export default function Hud({ booted }: HudProps) {
           <KbdHint icon={<MousePointerClick className="w-3 h-3" />} label={hintLabel} />
         </div>
 
-        {/* Prototype honesty notice */}
-        <div className="hidden md:flex items-center gap-2">
-          <StatusBadge tone="neutral" variant="soft">
-            Synthetic demo data & vehicles
-          </StatusBadge>
-          <StatusBadge tone="warning" variant="soft">
-            Prototype · LoD1 estimated model · Not official ULPINs
-          </StatusBadge>
-        </div>
+
       </motion.footer>
 
       {/* ── Floor strip (right edge) ─────────────────────────────────────── */}

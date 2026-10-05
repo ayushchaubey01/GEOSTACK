@@ -95,7 +95,7 @@ export default function LoadingScreen() {
       {/* Footer */}
       <div className="absolute bottom-6 left-6 right-6 flex justify-between text-xs font-mono-nums text-muted-foreground">
         <span>SIH26011 · DoLR · Phase 1 Prototype</span>
-        <span>Bengaluru Pilot AOI</span>
+        <span>Bengaluru</span>
       </div>
     </motion.div>
   );
