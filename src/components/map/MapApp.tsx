@@ -93,13 +93,6 @@ interface SelectedFeature {
   geometry: any;
 }
 
-interface ValidationIssue {
-  issue_type: string;
-  severity: string;
-  object_uuid: string;
-  display_code: string | null;
-  message: string;
-}
 
 interface FloorInfo {
   floor_number: number;
@@ -125,7 +118,10 @@ const BASEMAP_STYLES: Record<string, { name: string; icon: any; sources: Record<
       "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
       "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
     ], tileSize: 256, attribution: "© OpenStreetMap contributors" } },
-    layers: [{ id: "osm-basemap", type: "raster", source: "osm-tiles", paint: { "raster-opacity": 0.9 } }],
+    layers: [
+      { id: "osm-basemap", type: "raster", source: "osm-tiles", paint: { "raster-opacity": 0.9 } },
+      { id: "osm-blue-tint", type: "background", paint: { "background-color": "#3B82F6", "background-opacity": 0.08 } }
+    ],
   },
   satellite: {
     name: "Satellite (Esri)", icon: Satellite,
@@ -290,9 +286,7 @@ const MATCH_COLORS: Record<string, string> = {
   MATCHED_STRONG: "#059669", MATCHED_WEAK: "#16A34A", MATCHED_MARGINAL: "#B45309",
   CROSSES_MULTIPLE_PARCELS: "#EA580C", OUTSIDE_ALL_PARCELS: "#9CA3AF",
 };
-const SEVERITY_COLORS: Record<string, string> = {
-  ERROR: "bg-red-500", WARNING: "bg-amber-500", INFO: "bg-sky-500",
-};
+
 
 // ─── Format-demonstration importer metadata ──────────────────────────────
 const FORMAT_IMPORTERS = [
@@ -329,10 +323,7 @@ export default function MapApp() {
   const [hoveredFeature, setHoveredFeature] = useState<SelectedFeature | null>(null);
   const [mouseCoords, setMouseCoords] = useState<{ lng: number; lat: number } | null>(null);
   const [zoom, setZoom] = useState(14);
-  const [activeTab, setActiveTab] = useState<"inspect" | "stats" | "issues">("inspect");
-  const [issues, setIssues] = useState<ValidationIssue[]>([]);
-  const [issuesLoading, setIssuesLoading] = useState(false);
-  const [issuesSeverity, setIssuesSeverity] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"inspect" | "stats">("inspect");
 
   // ── Layer state ─────────────────────────────────────────────────────────
   const [layers, setLayers] = useState({ parcels: true, buildings: true, roads: true, nonParcels: false, aoi: true });
@@ -642,10 +633,7 @@ export default function MapApp() {
     mapRef.current = map;
     if (typeof window !== "undefined") (window as any).__map = map;
 
-    // Add navigation + scale controls
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
-    map.addControl(new maplibregl.ScaleControl({ unit: "metric", maxWidth: 200 }), "bottom-left");
-    map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), "top-left");
+    // Default map controls removed to prevent overlap with the custom floating HUD.
 
     map.on("load", () => {
       const bFilter = ["all",
@@ -1070,7 +1058,7 @@ export default function MapApp() {
     const map = mapRef.current; if (!map || !map.loaded()) return;
     const style = BASEMAP_STYLES[basemap];
     // Remove old basemap sources/layers
-    for (const id of ["osm-basemap", "satellite-basemap", "satellite-labels", "carto-basemap", "carto-dark-basemap"]) {
+    for (const id of ["osm-basemap", "osm-blue-tint", "satellite-basemap", "satellite-labels", "carto-basemap", "carto-dark-basemap"]) {
       if (map.getLayer(id)) map.removeLayer(id);
     }
     for (const sid of ["osm-tiles", "esri-satellite", "esri-labels", "carto-light", "carto-dark"]) {
@@ -1366,21 +1354,6 @@ export default function MapApp() {
     toast(`Click building ${which} on the map`);
   };
 
-  // Load validation issues
-  const loadIssues = (sev: string) => {
-    setIssuesLoading(true);
-    const url = sev ? `/api/validation/issues?severity=${sev}&limit=500` : `/api/validation/issues?limit=500`;
-    fetch(url).then(r => r.json()).then(d => setIssues(d.issues || [])).catch(() => setIssues([])).finally(() => setIssuesLoading(false));
-  };
-  // Validation issue summary for the drawer
-  const issueSummary = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const it of issues) {
-      const k = `${it.severity || "FLAG"}:${it.issue_type || "anomaly"}`;
-      counts[k] = (counts[k] || 0) + 1;
-    }
-    return counts;
-  }, [issues]);
 
   // Dynamic breadcrumbs for TopBar
   const breadcrumbs = useMemo(() => [
@@ -1509,7 +1482,7 @@ export default function MapApp() {
           <LeftRail
             activeTab={railTab}
             onTabChange={setRailTab}
-            issuesCount={issues.length || stats?.counts?.validation_issues || 0}
+
             onOpenShortcuts={() => setShortcutsOpen(true)}
           />
         </div>
@@ -1523,13 +1496,13 @@ export default function MapApp() {
                 {railTab === "explore" && <MapPin className="w-4 h-4 text-[#4F46E5]" />}
                 {railTab === "layers" && <Layers className="w-4 h-4 text-[#4F46E5]" />}
                 {railTab === "stats" && <BarChart className="w-4 h-4 text-[#4F46E5]" />}
-                {railTab === "issues" && <AlertTriangle className="w-4 h-4 text-[#B45309]" />}
+
                 {railTab === "sources" && <Database className="w-4 h-4 text-[#4F46E5]" />}
                 <span>
                   {railTab === "explore" && "Pilot Colonies"}
                   {railTab === "layers" && "Layers & Styling"}
                   {railTab === "stats" && "Cadastral Stats"}
-                  {railTab === "issues" && "Validation Issues"}
+
                   {railTab === "sources" && "Data Lineage"}
                 </span>
               </div>
@@ -1919,68 +1892,7 @@ export default function MapApp() {
                 </div>
               )}
 
-              {/* TAB: VALIDATION ISSUES */}
-              {railTab === "issues" && (
-                <div className="p-3 space-y-3">
-                  <div className="flex gap-1 bg-[#F3F4F6] p-1 rounded-xl">
-                    {["", "ERROR", "WARNING", "INFO"].map(sev => (
-                      <button
-                        key={sev}
-                        className={cn(
-                          "text-xs px-2.5 py-1 rounded-lg font-medium transition cursor-pointer flex-1 text-center",
-                          issuesSeverity === sev ? "bg-white text-[#4F46E5] shadow-xs" : "text-[#6B7280] hover:text-[#0F172A]"
-                        )}
-                        onClick={() => setIssuesSeverity(sev)}
-                      >
-                        {sev || "ALL"}
-                      </button>
-                    ))}
-                  </div>
 
-                  <div className="text-xs text-[#6B7280]">
-                    {issues.length} flags shown · {stats?.counts?.validation_issues?.toLocaleString()} total in dataset
-                  </div>
-
-                  {/* Issue summary by type */}
-                  {Object.keys(issueSummary).length > 0 && (
-                    <div className="p-2.5 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB]">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280] mb-1.5">Issue Summary</div>
-                      <div className="space-y-1">
-                        {Object.entries(issueSummary).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => (
-                          <div key={k} className="flex items-center justify-between text-xs">
-                            <span className="text-[#6B7280] truncate">{k.split(":")[1]?.replace(/_/g, " ").toLowerCase() || k}</span>
-                            <span className="text-[#B45309] font-semibold font-mono-nums ml-2">{v}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {issuesLoading ? (
-                    <div className="text-xs text-[#6B7280] py-6 text-center">Loading validation flags…</div>
-                  ) : (
-                    <div className="space-y-1.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-0.5 custom-scroll">
-                      {issues.map((iss, i) => (
-                        <button
-                          key={i}
-                          className="w-full text-left p-2.5 rounded-xl bg-white hover:bg-[#F9FAFB] border border-[#E5E7EB] transition cursor-pointer"
-                          onClick={() => { if (iss.object_uuid) setHighlightedUuid(iss.object_uuid); }}
-                        >
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className={cn("w-2 h-2 rounded-full", SEVERITY_COLORS[iss.severity] || "bg-slate-400")} />
-                            <span className="text-xs font-mono-nums text-[#6B7280] font-medium">{iss.issue_type}</span>
-                          </div>
-                          <div className="text-xs text-[#0F172A] leading-relaxed">{iss.message}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="text-[11px] text-[#B45309] p-2 rounded-xl bg-[#FFFBEB] border border-[#FDE68A]">
-                    ⚠ Phase 1 research prototype validation flags — NOT an official land title audit.
-                  </div>
-                </div>
-              )}
 
               {/* TAB: DATA SOURCES & LINEAGE */}
               {railTab === "sources" && (

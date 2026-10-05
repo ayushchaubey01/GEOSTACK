@@ -13,20 +13,20 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export type MapRailTab = 'explore' | 'layers' | 'stats' | 'issues' | 'sources';
+export type MapRailTab = 'explore' | 'layers' | 'stats' | 'sources';
 export type ViewerRailTab = 'floors' | 'display' | 'units';
 
 interface LeftRailProps {
   activeTab: string | null;
   onTabChange: (tab: string | null) => void;
-  issuesCount?: number;
+
   onOpenShortcuts: () => void;
 }
 
 export function LeftRail({
   activeTab,
   onTabChange,
-  issuesCount = 0,
+
   onOpenShortcuts,
 }: LeftRailProps) {
   const appView = useViewerStore((s) => s.appView);
@@ -70,14 +70,7 @@ export function LeftRail({
                 onClick={() => handleTabClick('stats')}
               />
 
-              {/* Issues */}
-              <RailButton
-                icon={<AlertTriangle className="w-4 h-4" strokeWidth={1.5} />}
-                label="Validation & Anomaly Issues"
-                active={activeTab === 'issues'}
-                badge={issuesCount > 0 ? issuesCount : undefined}
-                onClick={() => handleTabClick('issues')}
-              />
+
 
               {/* Data Sources */}
               <RailButton
