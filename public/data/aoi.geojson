@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "aoi",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Bengaluru Pilot AOI", "type": "AOI", "west": 77.605, "south": 12.955, "east": 77.665, "north": 12.995 }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 77.665, 12.955 ], [ 77.665, 12.995 ], [ 77.605, 12.995 ], [ 77.605, 12.955 ], [ 77.665, 12.955 ] ] ] } }
+]
+}

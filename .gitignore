@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing & Audits
+tests/screenshots/
+tests/a11y-report.json
+tests/lighthouse.json
+playwright-report/
+test-results/
+
+# Next.js build output
+.next/
+out/
+
+# Environment files
+.env*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+server.log
+
+# Tooling wrapper
+powershell.cmd
+powershell.exe
+*.exe
+.env

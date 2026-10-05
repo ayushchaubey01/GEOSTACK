@@ -1,0 +1,81 @@
+{
+  "aoi": {
+    "west": 77.605,
+    "south": 12.955,
+    "east": 77.665,
+    "north": 12.995,
+    "center_lon": 77.635,
+    "center_lat": 12.975,
+    "size_km": 6.66
+  },
+  "counts": {
+    "parcels": 1332,
+    "buildings": 38882,
+    "roads": 7810,
+    "buildings_with_height": 37857,
+    "buildings_outside_parcels": 13200,
+    "validation_issues": 16716
+  },
+  "height_stats": {
+    "min_m": 0.12,
+    "max_m": 103.94,
+    "mean_m": 17.6,
+    "median_m": 14.96
+  },
+  "data_sources": [
+    {
+      "name": "Cadastral Parcels",
+      "source": "BBMP / KSRSAC",
+      "license": "Government of Karnataka",
+      "legal_status": "Official administrative spatial dataset",
+      "url": "https://ksrsac.karnataka.gov.in/"
+    },
+    {
+      "name": "Building Footprints",
+      "source": "OpenStreetMap",
+      "license": "ODbL 1.0",
+      "legal_status": "Open collaborative spatial data",
+      "url": "https://www.openstreetmap.org/"
+    },
+    {
+      "name": "ML Building Heights",
+      "source": "3D-GloBFP (Ref Year 2020)",
+      "license": "CC-BY 4.0",
+      "legal_status": "Machine learning estimated LoD1 models",
+      "url": "https://zenodo.org/records/7504381"
+    },
+    {
+      "name": "Digital Surface Model",
+      "source": "Copernicus DSM 30m",
+      "license": "Copernicus Open Access",
+      "legal_status": "Satellite radar DSM (not bare-earth DTM)",
+      "url": "https://copernicus.eu/"
+    },
+    {
+      "name": "Geodetic Reference",
+      "source": "IGS IISC00IND GNSS Station",
+      "license": "Public Geodetic Network",
+      "legal_status": "Permanent reference frame station",
+      "url": "https://igs.org/"
+    }
+  ],
+  "id_scheme": {
+    "format": "BLR-{LAYER}-{COLONY}-{LOCAL_ID}",
+    "example": "BLR-B-HAL2-00412",
+    "use_classes": {
+      "RES": "Residential",
+      "COM": "Commercial",
+      "IND": "Industrial",
+      "MIX": "Mixed Use",
+      "CIV": "Civic"
+    },
+    "note": "Internal prototype identifiers generated for research demonstration purposes. Not official ULPINs issued by the Department of Land Resources (DoLR)."
+  },
+  "honesty_disclaimers": [
+    "Heights are ML-estimated from 3D-GloBFP (2020) and Copernicus DSM — NOT ground surveyed measurements.",
+    "OSM building footprints are community-mapped geometries — NOT legally surveyed cadastral records.",
+    "Internal prototype IDs are demonstration identifiers — NOT official Government ULPINs.",
+    "Cadastral legal status, ownership, and encumbrance are NOT verified in Phase 1.",
+    "Floor counts and volumetric subdivisions are estimates derived from height models."
+  ]
+}

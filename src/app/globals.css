@@ -1,0 +1,222 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   3D ULPIN — Light Whimsical/Linear design system
+   DESIGN.md: light theme, indigo 600 accent, Inter + JetBrains Mono
+   ============================================================ */
+
+@theme inline {
+  /* ── Fonts ──────────────────────────────────────────────── */
+  --font-sans:  var(--font-inter);
+  --font-mono:  var(--font-jetbrains-mono);
+
+  /* ── Semantic colour aliases (shadcn compatibility) ─────── */
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-destructive:          var(--destructive);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  /* Radius scale */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ── Design tokens (light, always) ──────────────────────────── */
+:root {
+  --radius: 0.5rem; /* 8px base → xl = 12px; 2xl via Tailwind = 16px */
+
+  /* Surfaces */
+  --canvas:           #F6F7F9;  /* app bg + 3D scene bg */
+  --surface:          #FFFFFF;  /* cards, panels, navbar */
+  --surface-subtle:   #F9FAFB;  /* inset blocks, zebra */
+
+  /* Semantic → shadcn mapping */
+  --background:         #F6F7F9;
+  --foreground:         #0F172A;
+  --card:               #FFFFFF;
+  --card-foreground:    #0F172A;
+  --popover:            #FFFFFF;
+  --popover-foreground: #0F172A;
+
+  /* Primary: Indigo 600 */
+  --primary:            #4F46E5;
+  --primary-foreground: #FFFFFF;
+
+  /* Primary tints (for JS use as CSS variables) */
+  --primary-50:   #EEF2FF;
+  --primary-100:  #E0E7FF;
+  --primary-200:  #C7D2FE;
+  --primary-500:  #6366F1;
+  --primary-600:  #4F46E5;
+  --primary-700:  #4338CA;
+  --primary-900:  #312E81;
+
+  /* Neutrals */
+  --secondary:             #F3F4F6;
+  --secondary-foreground:  #0F172A;
+  --muted:                 #F3F4F6;
+  --muted-foreground:      #6B7280;
+  --accent:                #EEF2FF;
+  --accent-foreground:     #312E81;
+
+  /* Borders */
+  --border:        #E5E7EB;
+  --border-strong: #D1D5DB;
+  --input:         #F9FAFB;
+  --ring:          #6366F1;
+
+  /* Semantic: destructive */
+  --destructive: #B91C1C;
+
+  /* Text scale */
+  --text:         #0F172A;
+  --text-muted:   #6B7280;
+  --text-subtle:  #9CA3AF;
+
+  /* Semantic colours */
+  --success:      #059669;
+  --success-bg:   #ECFDF5;
+  --warning:      #B45309;
+  --warning-bg:   #FFFBEB;
+  --danger:       #B91C1C;
+  --danger-bg:    #FEF2F2;
+  --info:         #1D4ED8;
+  --info-bg:      #EFF6FF;
+
+  /* Charts */
+  --chart-1: #4F46E5;  /* indigo primary */
+  --chart-2: #6366F1;  /* indigo-500 */
+  --chart-3: #059669;  /* success */
+  --chart-4: #B45309;  /* warning */
+  --chart-5: #B91C1C;  /* danger */
+
+  /* Sidebar */
+  --sidebar:                    #FFFFFF;
+  --sidebar-foreground:         #0F172A;
+  --sidebar-primary:            #4F46E5;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:             #EEF2FF;
+  --sidebar-accent-foreground:  #312E81;
+  --sidebar-border:             #E5E7EB;
+  --sidebar-ring:               #6366F1;
+}
+
+/* No dark mode — the app is always light. */
+
+/* ── Base layer ─────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html, body {
+    background-color: var(--background);
+    color: var(--foreground);
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* ── Thin Linear-style scrollbar ────────────────────────────── */
+*::-webkit-scrollbar          { width: 5px; height: 5px; }
+*::-webkit-scrollbar-track    { background: transparent; }
+*::-webkit-scrollbar-thumb    { background: #D1D5DB; border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+/* ── Monospace numerics utility ─────────────────────────────── */
+.font-mono-nums {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* ── 3D canvas background (dot grid) ────────────────────────── */
+.viewer-canvas-bg {
+  background-color: #F6F7F9;
+  background-image:
+    radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Indigo selection glow ───────────────────────────────────── */
+.viewer-accent-glow {
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.30),
+    0 0 20px 0  rgba(99, 102, 241, 0.12);
+}
+
+/* ── Card / panel shadows ────────────────────────────────────── */
+.shadow-card    { box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+.shadow-panel   { box-shadow: 0 4px 16px rgba(15,23,42,0.06); }
+.shadow-float   { box-shadow: 0 8px 24px rgba(15,23,42,0.08); }
+.shadow-overlay { box-shadow: 0 16px 40px rgba(15,23,42,0.12); }
+
+/* ── Focus ring ─────────────────────────────────────────────── */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ── Status badge soft tones ─────────────────────────────────── */
+.badge-success  { background: var(--success-bg); color: var(--success); }
+.badge-warning  { background: var(--warning-bg); color: var(--warning); }
+.badge-danger   { background: var(--danger-bg);  color: var(--danger); }
+.badge-info     { background: var(--info-bg);    color: var(--info); }
+.badge-indigo   { background: var(--primary-50); color: var(--primary-700); }
+.badge-neutral  { background: #F3F4F6;            color: #374151; }
+
+/* ── Dashed "Planned / Synthetic" badge ─────────────────────── */
+.badge-dashed-warning {
+  background: transparent;
+  color: var(--warning);
+  border: 1.5px dashed var(--warning);
+}
+.badge-dashed-neutral {
+  background: transparent;
+  color: #6B7280;
+  border: 1.5px dashed #9CA3AF;
+}
+
+/* ── MapLibre attribution override ──────────────────────────── */
+.maplibregl-ctrl-attrib { font-size: 11px !important; }
+.maplibregl-ctrl-attrib-inner a { color: var(--text-muted) !important; }
